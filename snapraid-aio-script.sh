@@ -684,20 +684,12 @@ function trim_log(){
 
 # Process and mail the email body read from stdin.
 function send_mail(){
-  local body; body=$(cat)
-  # Send the raw $body and append the HTML.
-  # Try to workaround py markdown 2.6.8 issues:
-  # 1. Will not format code blocks with empty lines, so just remove
-  #    them.
-  # 2. A dash line inside of code block brekas it, so remove it.
-  # 3. Add trailing double-spaces ensures the line endings are
-  #    maintained.
-  # 4. The HTML code blocks need to be modified to use <pre></pre> to display
-  #    correctly.
-  $MAIL_BIN -a 'Content-Type: text/html' -s "$SUBJECT" "$EMAIL_ADDRESS" \
-    < <(echo "$body" | sed '/^[[:space:]]*$/d; /^ -*$/d; s/$/  /' |
-      python -m markdown |
-      sed 's/<code>/<pre>/;s%</code>%</pre>%')
+  echo "From: snapRAID Report " >/tmp/snapRAID.out.mail
+  echo "To: $EMAIL_ADDRESS" >> /tmp/snapRAID.out.mail
+  echo "Subject: $SUBJECT" >> /tmp/snapRAID.out.mail
+  cat /tmp/snapRAID.out >> /tmp/snapRAID.out.mail
+
+  ssmtp $EMAIL_ADDRESS < /tmp/snapRAID.out.mail
 }
 
 # Due to how process substitution and newer bash versions work, this function
